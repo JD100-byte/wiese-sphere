@@ -4,26 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wiese Advokatfirma</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #041D27; overflow: hidden; }
-    #wrap { position: relative; width: 100%; height: 100vh; background: #041D27; overflow: hidden; }
+    html, body { width: 100%; height: 100%; background: #134158; overflow: hidden; }
+    #wrap { position: relative; width: 100%; height: 100vh; background: #134158; overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     #labels { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     .lbl {
       position: absolute;
       font-family: 'Manrope', sans-serif;
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 400;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
+      letter-spacing: 0;
+      text-transform: none;
       color: #EFFFFF;
       white-space: nowrap;
       cursor: pointer;
       pointer-events: all;
       text-decoration: none;
-      padding: 5px 8px;
+      padding: 4px 6px;
       border-radius: 2px;
       transition: color 0.2s, background 0.2s;
     }
@@ -43,14 +43,14 @@
   const MM3 = 11.3;
 
   const ITEMS = [
-    { text: 'Skatterett',         url: 'https://www.wieseadv.no/about-1',            angleDeg: 0,   shiftX: false, align: 'center', nudgeX: MM3  },
-    { text: 'Verdipapirer',       url: 'https://www.wieseadv.no/about-1',            angleDeg: 45,  shiftX: true,  align: 'right',  nudgeX: 0    },
-    { text: 'Skatterapportering', url: 'https://www.wieseadv.no/skatterapportering', angleDeg: 90,  shiftX: true,  align: 'right',  nudgeX: 0    },
-    { text: 'Selskapsrett',       url: 'https://www.wieseadv.no/about-1-1',          angleDeg: 135, shiftX: true,  align: 'right',  nudgeX: 0    },
-    { text: 'Arbeidsrett',        url: 'https://www.wieseadv.no/arbeidsrett',        angleDeg: 180, shiftX: false, align: 'center', nudgeX: MM3  },
-    { text: 'Konkurs',            url: 'https://www.wieseadv.no/konkurs',            angleDeg: 225, shiftX: false, align: 'left',   nudgeX: 0    },
-    { text: 'Migrasjon',          url: 'https://www.wieseadv.no/migrasjon',          angleDeg: 270, shiftX: false, align: 'left',   nudgeX: 0    },
-    { text: 'Skifte',             url: 'https://www.wieseadv.no/skifte',             angleDeg: 315, shiftX: false, align: 'left',   nudgeX: 0    },
+    { text: 'Skatterett',         url: 'https://www.wieseadv.no/skatterett',        angleDeg: 0,   shiftX: false, align: 'center', nudgeX: MM3 },
+    { text: 'Verdipapirer',       url: 'https://www.wieseadv.no/about-1',           angleDeg: 45,  shiftX: true,  align: 'right',  nudgeX: 0   },
+    { text: 'Skatterapportering', url: 'https://www.wieseadv.no/skatterapportering',angleDeg: 90,  shiftX: true,  align: 'right',  nudgeX: 0   },
+    { text: 'Selskapsrett',       url: 'https://www.wieseadv.no/selskapsrett',      angleDeg: 135, shiftX: true,  align: 'right',  nudgeX: 0   },
+    { text: 'Arbeidsrett',        url: 'https://www.wieseadv.no/arbeidsrett',       angleDeg: 180, shiftX: false, align: 'center', nudgeX: MM3 },
+    { text: 'Konkurs',            url: 'https://www.wieseadv.no/konkurs',           angleDeg: 225, shiftX: false, align: 'left',   nudgeX: 0   },
+    { text: 'Migrasjon',          url: 'https://www.wieseadv.no/migrasjon',         angleDeg: 270, shiftX: false, align: 'left',   nudgeX: 0   },
+    { text: 'Skifte',             url: 'https://www.wieseadv.no/skifte',            angleDeg: 315, shiftX: false, align: 'left',   nudgeX: 0   },
   ];
 
   const container = document.getElementById('labels');
@@ -59,7 +59,7 @@
   ITEMS.forEach(item => {
     const a = document.createElement('a');
     a.className = 'lbl';
-    a.textContent = item.text.toUpperCase();
+    a.textContent = item.text;
     a.href = item.url;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
@@ -126,7 +126,7 @@
       wAmp3:  (0.00002 + Math.random() * 0.0001) * 0.5,
       wFreq3:  0.0004  + Math.random() * 0.0007,
       wPhase3: Math.random() * Math.PI * 2,
-      sz: (0.7 + Math.random() * 1.6) * 0.75,
+      sz: (0.7 + Math.random() * 1.6) * 0.75 * 0.8,
     });
   }
 
@@ -147,13 +147,15 @@
     requestAnimationFrame(frame);
     const dt = Math.min(ts - last, 32); last = ts;
 
-    ctx.fillStyle = '#041D27';
+    ctx.fillStyle = '#134158';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(4,21,31,0.576)';
     ctx.fillRect(0, 0, W, H);
 
     const bg = ctx.createRadialGradient(cx, cy, R*.05, cx, cy, R*1.2);
-    bg.addColorStop(0,   'rgba(46,107,138,.14)');
-    bg.addColorStop(.55, 'rgba(19,65,88,.06)');
-    bg.addColorStop(1,   'rgba(4,29,39,0)');
+    bg.addColorStop(0,   'rgba(46,107,138,.16)');
+    bg.addColorStop(.55, 'rgba(13,45,61,.08)');
+    bg.addColorStop(1,   'rgba(13,45,61,0)');
     ctx.beginPath(); ctx.arc(cx, cy, R*1.2, 0, Math.PI*2);
     ctx.fillStyle = bg; ctx.fill();
 
