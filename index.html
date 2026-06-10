@@ -40,32 +40,22 @@
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
   let W, H, cx, cy, R, labelR, SHIFT;
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    cx = W / 2;
-    cy = H / 2;
-    R  = Math.min(W, H) * 0.30;
-    labelR = R * 1.215;
-    SHIFT  = W * 0.05;
-    placeLabels();
-  }
+  const MM3 = 11.3;
 
   const ITEMS = [
-    { text: 'Skatterett',         url: 'https://www.wieseadv.no/about-1',            angleDeg: 0,   shiftX: true  },
-    { text: 'Verdipapirer',       url: 'https://www.wieseadv.no/about-1',            angleDeg: 45,  shiftX: true  },
-    { text: 'Skatterapportering', url: 'https://www.wieseadv.no/skatterapportering', angleDeg: 90,  shiftX: true  },
-    { text: 'Selskapsrett',       url: 'https://www.wieseadv.no/about-1-1',          angleDeg: 135, shiftX: true  },
-    { text: 'Arbeidsrett',        url: 'https://www.wieseadv.no/arbeidsrett',        angleDeg: 180, shiftX: false },
-    { text: 'Konkurs',            url: 'https://www.wieseadv.no/konkurs',            angleDeg: 225, shiftX: false },
-    { text: 'Migrasjon',          url: 'https://www.wieseadv.no/migrasjon',          angleDeg: 270, shiftX: false },
-    { text: 'Skifte',             url: 'https://www.wieseadv.no/skifte',             angleDeg: 315, shiftX: false },
+    { text: 'Skatterett',         url: 'https://www.wieseadv.no/about-1',            angleDeg: 0,   shiftX: false, align: 'center', nudgeX: MM3  },
+    { text: 'Verdipapirer',       url: 'https://www.wieseadv.no/about-1',            angleDeg: 45,  shiftX: true,  align: 'right',  nudgeX: 0    },
+    { text: 'Skatterapportering', url: 'https://www.wieseadv.no/skatterapportering', angleDeg: 90,  shiftX: true,  align: 'right',  nudgeX: 0    },
+    { text: 'Selskapsrett',       url: 'https://www.wieseadv.no/about-1-1',          angleDeg: 135, shiftX: true,  align: 'right',  nudgeX: 0    },
+    { text: 'Arbeidsrett',        url: 'https://www.wieseadv.no/arbeidsrett',        angleDeg: 180, shiftX: false, align: 'center', nudgeX: MM3  },
+    { text: 'Konkurs',            url: 'https://www.wieseadv.no/konkurs',            angleDeg: 225, shiftX: false, align: 'left',   nudgeX: 0    },
+    { text: 'Migrasjon',          url: 'https://www.wieseadv.no/migrasjon',          angleDeg: 270, shiftX: false, align: 'left',   nudgeX: 0    },
+    { text: 'Skifte',             url: 'https://www.wieseadv.no/skifte',             angleDeg: 315, shiftX: false, align: 'left',   nudgeX: 0    },
   ];
 
-  // Build DOM labels once
   const container = document.getElementById('labels');
   const labelEls = [];
+
   ITEMS.forEach(item => {
     const a = document.createElement('a');
     a.className = 'lbl';
@@ -84,20 +74,30 @@
       const ly  = cy + Math.sin(rad) * labelR;
       const el  = labelEls[i];
       el.style.top = ly + 'px';
-      el.style.left = lx + 'px';
-      if (item.shiftX) {
-        el.style.transform = 'translate(0,-50%)';
-      } else if (lx < cx - 10) {
-        el.style.transform = 'translate(-100%,-50%)';
-      } else if (lx > cx + 10) {
+      if (item.align === 'center') {
+        el.style.left = (cx + item.nudgeX) + 'px';
+        el.style.transform = 'translate(-50%,-50%)';
+      } else if (item.align === 'right') {
+        el.style.left = (lx + item.nudgeX) + 'px';
         el.style.transform = 'translate(0,-50%)';
       } else {
-        el.style.transform = 'translate(-50%,-50%)';
+        el.style.left = (lx + item.nudgeX) + 'px';
+        el.style.transform = 'translate(-100%,-50%)';
       }
     });
   }
 
-  // Dots
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cx = W / 2;
+    cy = H / 2;
+    R  = Math.min(W, H) * 0.30;
+    labelR = R * 1.215;
+    SHIFT  = W * 0.05;
+    placeLabels();
+  }
+
   const N = 4320;
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const dots = [];
@@ -111,21 +111,21 @@
     if (edgeProximity > 0 && Math.random() < edgeProximity * 0.5) continue;
     const speed = (0.00008 + Math.random() * 0.00042) * 0.5;
     const angle = Math.random() * Math.PI * 2;
-    const sAz   = Math.random() < 0.5 ? 1 : -1;
-    const sEl   = Math.random() < 0.5 ? 1 : -1;
+    const sAz  = Math.random() < 0.5 ? 1 : -1;
+    const sEl  = Math.random() < 0.5 ? 1 : -1;
     dots.push({
       az, el,
-      vaz:  sAz * Math.abs(Math.cos(angle)) * speed,
-      vel:  sEl * Math.abs(Math.sin(angle)) * speed * 0.55,
-      wAmp:  (0.00005 + Math.random() * 0.00022) * 0.5,
-      wFreq:  0.00015 + Math.random() * 0.0012,
-      wPhase: Math.random() * Math.PI * 2,
+      vaz:    sAz * Math.abs(Math.cos(angle)) * speed,
+      vel:    sEl * Math.abs(Math.sin(angle)) * speed * 0.55,
+      wAmp:   (0.00005 + Math.random() * 0.00022) * 0.5,
+      wFreq:   0.00015 + Math.random() * 0.0012,
+      wPhase:  Math.random() * Math.PI * 2,
       wAmp2:  (0.00003 + Math.random() * 0.00015) * 0.5,
-      wFreq2: 0.00025 + Math.random() * 0.0009,
-      wPhase2:Math.random() * Math.PI * 2,
+      wFreq2:  0.00025 + Math.random() * 0.0009,
+      wPhase2: Math.random() * Math.PI * 2,
       wAmp3:  (0.00002 + Math.random() * 0.0001) * 0.5,
-      wFreq3: 0.0004  + Math.random() * 0.0007,
-      wPhase3:Math.random() * Math.PI * 2,
+      wFreq3:  0.0004  + Math.random() * 0.0007,
+      wPhase3: Math.random() * Math.PI * 2,
       sz: (0.7 + Math.random() * 1.6) * 0.75,
     });
   }
@@ -158,12 +158,12 @@
     ctx.fillStyle = bg; ctx.fill();
 
     const sunX = cx + R * 1.05;
-    const sunRise = ctx.createRadialGradient(sunX, cy, 0, sunX, cy, R*1.5);
-    sunRise.addColorStop(0,    'rgba(210,170,110,0.13)');
-    sunRise.addColorStop(0.25, 'rgba(190,140,80,0.09)');
-    sunRise.addColorStop(0.55, 'rgba(160,110,60,0.04)');
+    const sunRise = ctx.createRadialGradient(sunX, cy, 0, sunX, cy, R*1.1);
+    sunRise.addColorStop(0,    'rgba(210,170,110,0.09)');
+    sunRise.addColorStop(0.35, 'rgba(190,140,80,0.05)');
+    sunRise.addColorStop(0.7,  'rgba(160,110,60,0.02)');
     sunRise.addColorStop(1,    'rgba(100,70,30,0)');
-    ctx.beginPath(); ctx.arc(cx, cy, R*1.5, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(cx, cy, R*1.1, 0, Math.PI*2);
     ctx.fillStyle = sunRise; ctx.fill();
 
     rotY += (0.000063 + Math.sin(ts * .0007) * .000028) * dt;
