@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wiese Advokatfirma</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #041D27; overflow: hidden; }
+    #wrap { position: relative; width: 100%; height: 100vh; background: #041D27; overflow: hidden; }
+    canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    #labels { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    .lbl {
+      position: absolute;
+      font-family: 'Manrope', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #EFFFFF;
+      white-space: nowrap;
+      cursor: pointer;
+      pointer-events: all;
+      text-decoration: none;
+      padding: 5px 8px;
+      border-radius: 2px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .lbl:hover { color: #E4EAA3; background: rgba(228,234,163,0.08); }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="labels"></div>
+</div>
+<script>
+(()=>{
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  let W, H, cx, cy, R, labelR, SHIFT;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cx = W / 2;
+    cy = H / 2;
+    R  = Math.min(W, H) * 0.30;
+    labelR = R * 1.215;
+    SHIFT  = W * 0.05;
+    placeLabels();
+  }
+
+  const ITEMS = [
+    { text: 'Skatterett',         url: 'https://www.wieseadv.no/about-1',            angleDeg: 0,   shiftX: true  },
+    { text: 'Verdipapirer',       url: 'https://www.wieseadv.no/about-1',            angleDeg: 45,  shiftX: true  },
+    { text: 'Skatterapportering', url: 'https://www.wieseadv.no/skatterapportering', angleDeg: 90,  shiftX: true  },
+    { text: 'Selskapsrett',       url: 'https://www.wieseadv.no/about-1-1',          angleDeg: 135, shiftX: true  },
+    { text: 'Arbeidsrett',        url: 'https://www.wieseadv.no/arbeidsrett',        angleDeg: 180, shiftX: false },
+    { text: 'Konkurs',            url: 'https://www.wieseadv.no/konkurs',            angleDeg: 225, shiftX: false },
+    { text: 'Migrasjon',          url: 'https://www.wieseadv.no/migrasjon',          angleDeg: 270, shiftX: false },
+    { text: 'Skifte',             url: 'https://www.wieseadv.no/skifte',             angleDeg: 315, shiftX: false },
+  ];
+
+  // Build DOM labels once
+  const container = document.getElementById('labels');
+  const labelEls = [];
+  ITEMS.forEach(item => {
+    const a = document.createElement('a');
+    a.className = 'lbl';
+    a.textContent = item.text.toUpperCase();
+    a.href = item.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    container.appendChild(a);
+    labelEls.push(a);
+  });
+
+  function placeLabels() {
+    ITEMS.forEach((item, i) => {
+      const rad = (item.angleDeg - 90) * Math.PI / 180;
+      const lx  = cx + Math.cos(rad) * labelR + (item.shiftX ? SHIFT : 0);
+      const ly  = cy + Math.sin(rad) * labelR;
+      const el  = labelEls[i];
+      el.style.top = ly + 'px';
+      el.style.left = lx + 'px';
+      if (item.shiftX) {
+        el.style.transform = 'translate(0,-50%)';
+      } else if (lx < cx - 10) {
+        el.style.transform = 'translate(-100%,-50%)';
+      } else if (lx > cx + 10) {
+        el.style.transform = 'translate(0,-50%)';
+      } else {
+        el.style.transform = 'translate(-50%,-50%)';
+      }
+    });
+  }
+
+  // Dots
+  const N = 4320;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const dots = [];
+  for (let i = 0; i < N; i++) {
+    const t  = i / (N - 1);
+    const el = Math.asin(2 * t - 1);
+    const az = goldenAngle * i;
+    const c  = Math.cos(el);
+    const distFromAxis  = Math.abs(Math.cos(el));
+    const edgeProximity = Math.max(0, (distFromAxis - 0.72) / 0.28);
+    if (edgeProximity > 0 && Math.random() < edgeProximity * 0.5) continue;
+    const speed = (0.00008 + Math.random() * 0.00042) * 0.5;
+    const angle = Math.random() * Math.PI * 2;
+    const sAz   = Math.random() < 0.5 ? 1 : -1;
+    const sEl   = Math.random() < 0.5 ? 1 : -1;
+    dots.push({
+      az, el,
+      vaz:  sAz * Math.abs(Math.cos(angle)) * speed,
+      vel:  sEl * Math.abs(Math.sin(angle)) * speed * 0.55,
+      wAmp:  (0.00005 + Math.random() * 0.00022) * 0.5,
+      wFreq:  0.00015 + Math.random() * 0.0012,
+      wPhase: Math.random() * Math.PI * 2,
+      wAmp2:  (0.00003 + Math.random() * 0.00015) * 0.5,
+      wFreq2: 0.00025 + Math.random() * 0.0009,
+      wPhase2:Math.random() * Math.PI * 2,
+      wAmp3:  (0.00002 + Math.random() * 0.0001) * 0.5,
+      wFreq3: 0.0004  + Math.random() * 0.0007,
+      wPhase3:Math.random() * Math.PI * 2,
+      sz: (0.7 + Math.random() * 1.6) * 0.75,
+    });
+  }
+
+  const ER=152, EG=182, EB=183, CR=91, CG=155, CB=181;
+  let rotY = 0, rotX = 0.04, mx = 0, my = 0;
+
+  document.getElementById('wrap').addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    mx = (e.clientX - r.left) / r.width  - 0.5;
+    my = (e.clientY - r.top)  / r.height - 0.5;
+  });
+
+  function ry(p,a){ const cos=Math.cos(a),sin=Math.sin(a); return {x:p.x*cos+p.z*sin, y:p.y, z:-p.x*sin+p.z*cos}; }
+  function rx(p,a){ const cos=Math.cos(a),sin=Math.sin(a); return {x:p.x, y:p.y*cos-p.z*sin, z:p.y*sin+p.z*cos}; }
+
+  let last = 0;
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(ts - last, 32); last = ts;
+
+    ctx.fillStyle = '#041D27';
+    ctx.fillRect(0, 0, W, H);
+
+    const bg = ctx.createRadialGradient(cx, cy, R*.05, cx, cy, R*1.2);
+    bg.addColorStop(0,   'rgba(46,107,138,.14)');
+    bg.addColorStop(.55, 'rgba(19,65,88,.06)');
+    bg.addColorStop(1,   'rgba(4,29,39,0)');
+    ctx.beginPath(); ctx.arc(cx, cy, R*1.2, 0, Math.PI*2);
+    ctx.fillStyle = bg; ctx.fill();
+
+    const sunX = cx + R * 1.05;
+    const sunRise = ctx.createRadialGradient(sunX, cy, 0, sunX, cy, R*1.5);
+    sunRise.addColorStop(0,    'rgba(210,170,110,0.13)');
+    sunRise.addColorStop(0.25, 'rgba(190,140,80,0.09)');
+    sunRise.addColorStop(0.55, 'rgba(160,110,60,0.04)');
+    sunRise.addColorStop(1,    'rgba(100,70,30,0)');
+    ctx.beginPath(); ctx.arc(cx, cy, R*1.5, 0, Math.PI*2);
+    ctx.fillStyle = sunRise; ctx.fill();
+
+    rotY += (0.000063 + Math.sin(ts * .0007) * .000028) * dt;
+    rotX  = rotX * .97 + my * .006;
+    rotX  = Math.max(-.22, Math.min(.22, rotX));
+    rotY += mx * .003;
+
+    const proj = dots.map(d => {
+      const az = d.az + d.vaz*ts + d.wAmp*Math.sin(d.wFreq*ts+d.wPhase) + d.wAmp2*Math.cos(d.wFreq2*ts+d.wPhase2) + d.wAmp3*Math.sin(d.wFreq3*ts+d.wPhase3);
+      const el = d.el + d.vel*ts*0.4 + d.wAmp*Math.cos(d.wFreq*ts+d.wPhase)*0.4 + d.wAmp2*Math.sin(d.wFreq2*ts+d.wPhase2)*0.35 + d.wAmp3*Math.cos(d.wFreq3*ts+d.wPhase3)*0.3;
+      const c = Math.cos(el);
+      let p = { x: c*Math.cos(az), y: Math.sin(el), z: c*Math.sin(az) };
+      p = ry(p, rotY); p = rx(p, rotX);
+      const depth = (p.z + 1) / 2;
+      const dfc   = Math.sqrt(p.x*p.x + p.y*p.y);
+      const ef    = Math.max(0, dfc - 0.7) / 0.3;
+      return {
+        sx: cx + p.x*R, sy: cy - p.y*R, depth, pz: p.z,
+        alpha: Math.min(1, 0.1 + depth*.9 + ef*0.275),
+        r: Math.round(ER + (CR-ER)*depth),
+        g: Math.round(EG + (CG-EG)*depth),
+        b: Math.round(EB + (CB-EB)*depth),
+        sz: d.sz * (0.55 + depth*0.75),
+      };
+    });
+    proj.sort((a, b) => a.depth - b.depth);
+
+    const cd = R*.052, cd2 = cd*cd;
+    ctx.lineWidth = .3;
+    for (let i = 0; i < proj.length; i += 5) {
+      const a = proj[i]; if (a.pz < -.35) continue;
+      for (let j = i+5; j < proj.length; j += 5) {
+        const b = proj[j];
+        const dx = a.sx-b.sx, dy = a.sy-b.sy;
+        if (dx*dx + dy*dy > cd2) continue;
+        ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy);
+        ctx.strokeStyle = `rgba(91,155,181,${(.11*(a.depth+b.depth)/2).toFixed(3)})`; ctx.stroke();
+      }
+    }
+    for (const d of proj) {
+      ctx.beginPath(); ctx.arc(d.sx, d.sy, d.sz, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${d.r},${d.g},${d.b},${d.alpha.toFixed(3)})`; ctx.fill();
+    }
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
