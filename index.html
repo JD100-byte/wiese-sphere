@@ -4,30 +4,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wiese Advokatfirma</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #061e28; overflow: hidden; }
-    #wrap { position: relative; width: 100%; height: 100vh; background: #061e28; overflow: hidden; }
+    html, body { width: 100%; height: 100%; background: #062e3f; overflow: hidden; }
+    #wrap { position: relative; width: 100%; height: 100vh; background: #062e3f; overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     #labels { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     .lbl {
       position: absolute;
       font-family: 'Manrope', sans-serif;
-      font-size: 13px;
-      font-weight: 400;
-      letter-spacing: 0;
-      text-transform: none;
-      color: #EFFFFF;
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(218,233,238,0.75);
       white-space: nowrap;
       cursor: pointer;
       pointer-events: all;
       text-decoration: none;
-      padding: 4px 6px;
-      border-radius: 2px;
-      transition: color 0.2s, background 0.2s;
+      transition: color 0.4s ease, letter-spacing 0.4s ease, text-shadow 0.4s ease;
     }
-    .lbl:hover { color: #E4EAA3; background: rgba(228,234,163,0.08); }
+    .lbl.two-line { white-space: normal; text-align: left; line-height: 1.5; }
+    .lbl::after {
+      content: '';
+      display: block;
+      width: 0%;
+      height: 1px;
+      margin-top: 4px;
+      background: linear-gradient(90deg, rgba(228,234,163,0.85), rgba(228,234,163,0));
+      transition: width 0.45s cubic-bezier(.22,1,.36,1);
+    }
+    .lbl:hover {
+      color: rgba(244,250,252,1);
+      letter-spacing: 0.19em;
+      text-shadow: 0 0 18px rgba(180,220,240,0.35);
+    }
+    .lbl:hover::after { width: 100%; }
   </style>
 </head>
 <body>
@@ -39,51 +52,71 @@
 (()=>{
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
-  let W, H, cx, cy, R, labelR, SHIFT;
-  const MM3 = 11.3;
+  let W, H, cx, cy, R;
+  const GAP = 22;
+  const MM5 = 19;
 
   const ITEMS = [
-    { text: 'Skatterett',         url: 'https://www.wieseadv.no/skatterett',        angleDeg: 0,   shiftX: false, align: 'center', nudgeX: MM3 },
-    { text: 'Verdipapirer',       url: 'https://www.wieseadv.no/about-1',           angleDeg: 45,  shiftX: true,  align: 'right',  nudgeX: 0   },
-    { text: 'Skatterapportering', url: 'https://www.wieseadv.no/skatterapportering',angleDeg: 90,  shiftX: true,  align: 'right',  nudgeX: 0   },
-    { text: 'Selskapsrett',       url: 'https://www.wieseadv.no/selskapsrett',      angleDeg: 135, shiftX: true,  align: 'right',  nudgeX: 0   },
-    { text: 'Arbeidsrett',        url: 'https://www.wieseadv.no/arbeidsrett',       angleDeg: 180, shiftX: false, align: 'center', nudgeX: MM3 },
-    { text: 'Konkurs',            url: 'https://www.wieseadv.no/konkurs',           angleDeg: 225, shiftX: false, align: 'left',   nudgeX: 0   },
-    { text: 'Migrasjon',          url: 'https://www.wieseadv.no/migrasjon',         angleDeg: 270, shiftX: false, align: 'left',   nudgeX: 0   },
-    { text: 'Skifte',             url: 'https://www.wieseadv.no/skifte',            angleDeg: 315, shiftX: false, align: 'left',   nudgeX: 0   },
+    { text: 'Skatterett',          url: 'https://www.wieseadv.no/skatterett',        clock: 0,   nudgeX: -MM5, twoLine: false },
+    { text: 'Utflytting /\nInnflytting', url: 'https://www.wieseadv.no/migrasjon',   clock: 60,  nudgeX: 0,    twoLine: true  },
+    { text: 'Selskapsrett',        url: 'https://www.wieseadv.no/selskapsrett',      clock: 120, nudgeX: 0,    twoLine: false },
+    { text: 'Skatterapportering',  url: 'https://www.wieseadv.no/skatterapportering',clock: 180, nudgeX: -MM5, twoLine: false },
+    { text: 'Arbeidsrett',         url: 'https://www.wieseadv.no/arbeidsrett',       clock: 240, nudgeX: -MM5, twoLine: false },
+    { text: 'Konkurs',             url: 'https://www.wieseadv.no/konkurs',           clock: 300, nudgeX: -MM5, twoLine: false },
   ];
 
   const container = document.getElementById('labels');
   const labelEls = [];
-
   ITEMS.forEach(item => {
     const a = document.createElement('a');
-    a.className = 'lbl';
-    a.textContent = item.text;
+    a.className = 'lbl' + (item.twoLine ? ' two-line' : '');
+    if (item.twoLine) {
+      const lines = item.text.split('\n');
+      lines.forEach((line, idx) => {
+        const span = document.createElement('span');
+        span.textContent = line.trim();
+        a.appendChild(span);
+        if (idx < lines.length - 1) a.appendChild(document.createElement('br'));
+      });
+    } else {
+      a.textContent = item.text;
+    }
     a.href = item.url;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
+    a.style.visibility = 'hidden';
+    a.style.position = 'absolute';
     container.appendChild(a);
     labelEls.push(a);
   });
 
   function placeLabels() {
     ITEMS.forEach((item, i) => {
-      const rad = (item.angleDeg - 90) * Math.PI / 180;
-      const lx  = cx + Math.cos(rad) * labelR + (item.shiftX ? SHIFT : 0);
-      const ly  = cy + Math.sin(rad) * labelR;
-      const el  = labelEls[i];
-      el.style.top = ly + 'px';
-      if (item.align === 'center') {
-        el.style.left = (cx + item.nudgeX) + 'px';
-        el.style.transform = 'translate(-50%,-50%)';
-      } else if (item.align === 'right') {
-        el.style.left = (lx + item.nudgeX) + 'px';
-        el.style.transform = 'translate(0,-50%)';
+      const el = labelEls[i];
+      const tw = el.offsetWidth;
+      const th = el.offsetHeight;
+      const rad = (item.clock - 90) * Math.PI / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+      const ex = cx + cosA * R;
+      const ey = cy + sinA * R;
+      let bx, by;
+      const absS = Math.abs(sinA);
+      const absC = Math.abs(cosA);
+      if (absS > 0.85) {
+        bx = ex - tw/2 + item.nudgeX;
+        by = sinA > 0 ? ey + GAP : ey - GAP - th;
+      } else if (absC > 0.85) {
+        bx = cosA > 0 ? ex + GAP : ex - GAP - tw;
+        by = ey - th/2;
+        bx += item.nudgeX;
       } else {
-        el.style.left = (lx + item.nudgeX) + 'px';
-        el.style.transform = 'translate(-100%,-50%)';
+        if (cosA > 0) { bx = ex + GAP + item.nudgeX; by = ey - th/2; }
+        else { bx = ex - GAP - tw + item.nudgeX; by = ey - th/2; }
       }
+      el.style.left = Math.round(bx) + 'px';
+      el.style.top  = Math.round(by) + 'px';
+      el.style.visibility = 'visible';
     });
   }
 
@@ -92,10 +125,8 @@
     H = canvas.height = window.innerHeight;
     cx = W / 2;
     cy = H / 2;
-    R  = Math.min(W, H) * 0.30;
-    labelR = R * 1.215;
-    SHIFT  = W * 0.05;
-    placeLabels();
+    R  = Math.min(W, H) * 0.315;
+    requestAnimationFrame(() => requestAnimationFrame(placeLabels));
   }
 
   const N = 4320;
@@ -105,14 +136,14 @@
     const t  = i / (N - 1);
     const el = Math.asin(2 * t - 1);
     const az = goldenAngle * i;
-    const c  = Math.cos(el);
     const distFromAxis  = Math.abs(Math.cos(el));
     const edgeProximity = Math.max(0, (distFromAxis - 0.72) / 0.28);
     if (edgeProximity > 0 && Math.random() < edgeProximity * 0.5) continue;
     const speed = (0.00008 + Math.random() * 0.00042) * 0.5;
     const angle = Math.random() * Math.PI * 2;
-    const sAz  = Math.random() < 0.5 ? 1 : -1;
-    const sEl  = Math.random() < 0.5 ? 1 : -1;
+    const sAz = Math.random() < 0.5 ? 1 : -1;
+    const sEl = Math.random() < 0.5 ? 1 : -1;
+    const isGold = Math.random() < 0.025;
     dots.push({
       az, el,
       vaz:    sAz * Math.abs(Math.cos(angle)) * speed,
@@ -126,13 +157,25 @@
       wAmp3:  (0.00002 + Math.random() * 0.0001) * 0.5,
       wFreq3:  0.0004  + Math.random() * 0.0007,
       wPhase3: Math.random() * Math.PI * 2,
-      sz: (0.7 + Math.random() * 1.6) * 0.75 * 0.8,
+      sz: (0.7 + Math.random() * 1.6) * 0.75 * 0.8 * 0.5,
+      isGold,
+      twPhase: Math.random() * Math.PI * 2,
+      twFreq:  0.0008 + Math.random() * 0.0015,
     });
   }
 
-  const ER=152, EG=182, EB=183, CR=91, CG=155, CB=181;
-  let rotY = 0, rotX = 0.04, mx = 0, my = 0;
+  const SATS = 3;
+  const sats = [];
+  for (let i = 0; i < SATS; i++) {
+    sats.push({
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.00008 + Math.random() * 0.00006,
+      dir: i % 2 === 0 ? 1 : -1,
+      rMul: 1.045 + i * 0.037,
+    });
+  }
 
+  let rotY = 0, rotX = 0.04, mx = 0, my = 0;
   document.getElementById('wrap').addEventListener('mousemove', e => {
     const r = canvas.getBoundingClientRect();
     mx = (e.clientX - r.left) / r.width  - 0.5;
@@ -147,22 +190,75 @@
     requestAnimationFrame(frame);
     const dt = Math.min(ts - last, 32); last = ts;
 
-    ctx.fillStyle = '#061e28';
+    ctx.fillStyle = '#062e3f';
     ctx.fillRect(0, 0, W, H);
 
-    const bg = ctx.createRadialGradient(cx, cy, R*.05, cx, cy, R*1.2);
-    bg.addColorStop(0,   'rgba(46,107,138,.16)');
-    bg.addColorStop(.55, 'rgba(6,30,40,.08)');
-    bg.addColorStop(1,   'rgba(6,30,40,0)');
-    ctx.beginPath(); ctx.arc(cx, cy, R*1.2, 0, Math.PI*2);
+    const bg = ctx.createRadialGradient(cx, cy, R*.05, cx, cy, R*1.3);
+    bg.addColorStop(0,   'rgba(46,107,138,.15)');
+    bg.addColorStop(.55, 'rgba(6,46,63,.06)');
+    bg.addColorStop(1,   'rgba(6,46,63,0)');
+    ctx.beginPath(); ctx.arc(cx, cy, R*1.3, 0, Math.PI*2);
     ctx.fillStyle = bg; ctx.fill();
+
+    const ringPulse = 0.5 + Math.sin(ts * 0.0004) * 0.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*1.12, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(228,234,163,${(0.045 + ringPulse*0.04).toFixed(3)})`;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ts * 0.00005);
+    ctx.beginPath();
+    ctx.setLineDash([2, 14]);
+    ctx.arc(0, 0, R*1.082, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(170,210,225,0.10)';
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-ts * 0.00003);
+    ctx.beginPath();
+    ctx.arc(0, 0, R*1.045, 0, Math.PI*0.65);
+    ctx.strokeStyle = 'rgba(150,190,205,0.09)';
+    ctx.lineWidth = 0.45;
+    ctx.stroke();
+    ctx.restore();
+
+    sats.forEach(s => {
+      s.angle += s.speed * s.dir * dt;
+      const sr = R * s.rMul;
+      const sx2 = cx + Math.cos(s.angle) * sr;
+      const sy2 = cy + Math.sin(s.angle) * sr;
+      for (let k = 1; k <= 6; k++) {
+        const ta = s.angle - s.dir * k * 0.025;
+        const tx = cx + Math.cos(ta) * sr;
+        const ty = cy + Math.sin(ta) * sr;
+        ctx.beginPath();
+        ctx.arc(tx, ty, 0.8 * (1 - k/7), 0, Math.PI*2);
+        ctx.fillStyle = `rgba(210,230,245,${(0.25 * (1 - k/7)).toFixed(3)})`;
+        ctx.fill();
+      }
+      const sg = ctx.createRadialGradient(sx2, sy2, 0, sx2, sy2, 5);
+      sg.addColorStop(0,   'rgba(235,245,255,0.7)');
+      sg.addColorStop(0.5, 'rgba(200,225,245,0.18)');
+      sg.addColorStop(1,   'rgba(200,225,245,0)');
+      ctx.beginPath(); ctx.arc(sx2, sy2, 5, 0, Math.PI*2);
+      ctx.fillStyle = sg; ctx.fill();
+      ctx.beginPath(); ctx.arc(sx2, sy2, 1.1, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(240,248,255,0.9)'; ctx.fill();
+    });
 
     const sunX = cx + R * 1.05;
     const sunRise = ctx.createRadialGradient(sunX, cy, 0, sunX, cy, R*1.1);
-    sunRise.addColorStop(0,    'rgba(210,170,110,0.09)');
-    sunRise.addColorStop(0.35, 'rgba(190,140,80,0.05)');
-    sunRise.addColorStop(0.7,  'rgba(160,110,60,0.02)');
-    sunRise.addColorStop(1,    'rgba(100,70,30,0)');
+    sunRise.addColorStop(0,    'rgba(212,187,168,0.10)');
+    sunRise.addColorStop(0.35, 'rgba(200,165,130,0.05)');
+    sunRise.addColorStop(0.7,  'rgba(170,130,90,0.02)');
+    sunRise.addColorStop(1,    'rgba(120,90,60,0)');
     ctx.beginPath(); ctx.arc(cx, cy, R*1.1, 0, Math.PI*2);
     ctx.fillStyle = sunRise; ctx.fill();
 
@@ -180,19 +276,20 @@
       const depth = (p.z + 1) / 2;
       const dfc   = Math.sqrt(p.x*p.x + p.y*p.y);
       const ef    = Math.max(0, dfc - 0.7) / 0.3;
-      return {
-        sx: cx + p.x*R, sy: cy - p.y*R, depth, pz: p.z,
-        alpha: Math.min(1, 0.1 + depth*.9 + ef*0.275),
-        r: Math.round(ER + (CR-ER)*depth),
-        g: Math.round(EG + (CG-EG)*depth),
-        b: Math.round(EB + (CB-EB)*depth),
-        sz: d.sz * (0.55 + depth*0.75),
-      };
+      const tw    = 0.85 + 0.15 * Math.sin(ts * d.twFreq + d.twPhase);
+      const alpha = Math.min(1, (0.15 + depth*0.85 + ef*0.2)) * tw;
+      let r, g, b;
+      if (d.isGold) {
+        r = Math.round(222 + 18*depth); g = Math.round(202 + 23*depth); b = Math.round(152 + 28*depth);
+      } else {
+        r = Math.round(200 + 55*depth); g = Math.round(220 + 35*depth); b = Math.round(230 + 25*depth);
+      }
+      return { sx: cx + p.x*R, sy: cy - p.y*R, depth, alpha, r, g, b, sz: d.sz * (0.55 + depth*0.75), pz: p.z, isGold: d.isGold };
     });
     proj.sort((a, b) => a.depth - b.depth);
 
     const cd = R*.052, cd2 = cd*cd;
-    ctx.lineWidth = .3;
+    ctx.lineWidth = .22;
     for (let i = 0; i < proj.length; i += 5) {
       const a = proj[i]; if (a.pz < -.35) continue;
       for (let j = i+5; j < proj.length; j += 5) {
@@ -200,13 +297,27 @@
         const dx = a.sx-b.sx, dy = a.sy-b.sy;
         if (dx*dx + dy*dy > cd2) continue;
         ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy);
-        ctx.strokeStyle = `rgba(91,155,181,${(.11*(a.depth+b.depth)/2).toFixed(3)})`; ctx.stroke();
+        ctx.strokeStyle = `rgba(200,225,240,${(.07*(a.depth+b.depth)/2).toFixed(3)})`; ctx.stroke();
       }
     }
     for (const d of proj) {
-      ctx.beginPath(); ctx.arc(d.sx, d.sy, d.sz, 0, Math.PI*2);
+      const s = d.sz;
+      const glowR = d.isGold ? s*5.5 : s*4;
+      const grd = ctx.createRadialGradient(d.sx, d.sy, 0, d.sx, d.sy, glowR);
+      grd.addColorStop(0,   `rgba(${d.r},${d.g},${d.b},${(d.alpha*0.6).toFixed(3)})`);
+      grd.addColorStop(0.4, `rgba(${d.r},${d.g},${d.b},${(d.alpha*0.15).toFixed(3)})`);
+      grd.addColorStop(1,   `rgba(${d.r},${d.g},${d.b},0)`);
+      ctx.beginPath(); ctx.arc(d.sx, d.sy, glowR, 0, Math.PI*2);
+      ctx.fillStyle = grd; ctx.fill();
+      ctx.beginPath(); ctx.arc(d.sx, d.sy, s, 0, Math.PI*2);
       ctx.fillStyle = `rgba(${d.r},${d.g},${d.b},${d.alpha.toFixed(3)})`; ctx.fill();
     }
+
+    const vig = ctx.createRadialGradient(cx, cy, Math.min(W,H)*0.35, cx, cy, Math.max(W,H)*0.72);
+    vig.addColorStop(0, 'rgba(2,16,24,0)');
+    vig.addColorStop(1, 'rgba(2,16,24,0.38)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
   }
 
   window.addEventListener('resize', resize);
