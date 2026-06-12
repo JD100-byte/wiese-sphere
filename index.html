@@ -52,8 +52,8 @@
 (()=>{
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
-  let W, H, cx, cy, R;
-  const GAP = 22;
+  let W, H, cx, cy, R, OUTER_RING;
+  const MM1 = 3.78;
   const MM5 = 19;
 
   const ITEMS = [
@@ -98,21 +98,21 @@
       const rad = (item.clock - 90) * Math.PI / 180;
       const cosA = Math.cos(rad);
       const sinA = Math.sin(rad);
-      const ex = cx + cosA * R;
-      const ey = cy + sinA * R;
+      const ex = cx + cosA * OUTER_RING;
+      const ey = cy + sinA * OUTER_RING;
       let bx, by;
       const absS = Math.abs(sinA);
       const absC = Math.abs(cosA);
       if (absS > 0.85) {
         bx = ex - tw/2 + item.nudgeX;
-        by = sinA > 0 ? ey + GAP : ey - GAP - th;
+        by = sinA > 0 ? ey + MM1 : ey - MM1 - th;
       } else if (absC > 0.85) {
-        bx = cosA > 0 ? ex + GAP : ex - GAP - tw;
+        bx = cosA > 0 ? ex + MM1 : ex - MM1 - tw;
         by = ey - th/2;
         bx += item.nudgeX;
       } else {
-        if (cosA > 0) { bx = ex + GAP + item.nudgeX; by = ey - th/2; }
-        else { bx = ex - GAP - tw + item.nudgeX; by = ey - th/2; }
+        if (cosA > 0) { bx = ex + MM1 + item.nudgeX; by = ey - th/2; }
+        else { bx = ex - MM1 - tw + item.nudgeX; by = ey - th/2; }
       }
       el.style.left = Math.round(bx) + 'px';
       el.style.top  = Math.round(by) + 'px';
@@ -126,6 +126,7 @@
     cx = W / 2;
     cy = H / 2;
     R  = Math.min(W, H) * 0.315;
+    OUTER_RING = R * 1.12;
     requestAnimationFrame(() => requestAnimationFrame(placeLabels));
   }
 
