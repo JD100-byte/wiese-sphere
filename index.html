@@ -7,8 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #062e3f; overflow: hidden; }
-    #wrap { position: relative; width: 100%; height: 100vh; background: #062e3f; overflow: hidden; }
+    html, body { width: 100%; height: 100%; background: #041D27; overflow: hidden; }
+    #wrap { position: relative; width: 100%; height: 100vh; background: #041D27; overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     #labels { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     .lbl {
@@ -58,7 +58,7 @@
 
   const ITEMS = [
     { text: 'Skatterett',          url: 'https://www.wieseadv.no/skatterett',        clock: 0,   nudgeX: -MM5, twoLine: false },
-    { text: 'Utflytting /\nInnflytting', url: 'https://www.wieseadv.no/migrasjon',   clock: 60,  nudgeX: 0,    twoLine: true  },
+    { text: 'Utflytting /\nInnflytting', url: 'https://www.wieseadv.no/utflytting-og-innflytting-migrasjon',   clock: 60,  nudgeX: 0,    twoLine: true  },
     { text: 'Selskapsrett',        url: 'https://www.wieseadv.no/selskapsrett',      clock: 120, nudgeX: 0,    twoLine: false },
     { text: 'Skatterapportering',  url: 'https://www.wieseadv.no/skatterapportering',clock: 180, nudgeX: -MM5, twoLine: false },
     { text: 'Arbeidsrett',         url: 'https://www.wieseadv.no/arbeidsrett',       clock: 240, nudgeX: -MM5, twoLine: false },
@@ -191,13 +191,13 @@
     requestAnimationFrame(frame);
     const dt = Math.min(ts - last, 32); last = ts;
 
-    ctx.fillStyle = '#062e3f';
+    ctx.fillStyle = '#041D27';
     ctx.fillRect(0, 0, W, H);
 
     const bg = ctx.createRadialGradient(cx, cy, R*.05, cx, cy, R*1.3);
     bg.addColorStop(0,   'rgba(46,107,138,.15)');
-    bg.addColorStop(.55, 'rgba(6,46,63,.06)');
-    bg.addColorStop(1,   'rgba(6,46,63,0)');
+    bg.addColorStop(.55, 'rgba(4,29,39,.06)');
+    bg.addColorStop(1,   'rgba(4,29,39,0)');
     ctx.beginPath(); ctx.arc(cx, cy, R*1.3, 0, Math.PI*2);
     ctx.fillStyle = bg; ctx.fill();
 
